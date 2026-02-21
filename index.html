@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Planner Pro Famille</title>
+    <title>Planner Pro Famille v6</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3652/3652191.png">
@@ -22,12 +22,11 @@
         .row { display: flex; gap: 10px; }
         .row > div { flex: 1; }
         
-        /* Grilles de sélection */
-        .selection-grid { display: flex; overflow-x: auto; gap: 8px; padding: 5px 0; margin-bottom: 5px; }
-        .icon-item { padding: 8px; background: #f8f9fa; border-radius: 10px; font-size: 20px; border: 2px solid transparent; flex-shrink: 0; }
+        .selection-grid { display: flex; overflow-x: auto; gap: 8px; padding: 5px 0; margin-bottom: 5px; -webkit-overflow-scrolling: touch; }
+        .icon-item { padding: 10px; background: #f8f9fa; border-radius: 10px; font-size: 22px; border: 2px solid transparent; flex-shrink: 0; min-width: 40px; text-align: center; }
         .icon-item.selected { border-color: var(--primary); background: #e1f5fe; }
         
-        .color-item { width: 30px; height: 30px; border-radius: 50%; border: 3px solid transparent; flex-shrink: 0; cursor: pointer; }
+        .color-item { width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent; flex-shrink: 0; cursor: pointer; }
         .color-item.selected { border-color: #2c3e50; transform: scale(1.1); }
 
         .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; color: white; font-weight: bold; font-size: 15px; margin-top: 15px; cursor: pointer; }
@@ -42,6 +41,7 @@
         .task-info { flex: 1; }
         .task-title { font-weight: bold; margin: 0; font-size: 15px; }
         .task-departure { color: #e67e22; font-weight: bold; font-size: 13px; }
+        .actions { display: flex; gap: 4px; }
         .actions button { background: none; border: none; font-size: 18px; padding: 5px; cursor: pointer; }
     </style>
 </head>
@@ -78,14 +78,15 @@
     <div id="taskList"></div>
 
     <script>
-        let tasks = JSON.parse(localStorage.getItem('planner_v5_tasks')) || {};
+        let tasks = JSON.parse(localStorage.getItem('planner_v6_tasks')) || {};
         let selectedIcon = '💼';
         let selectedColor = '#3498db';
         let editingId = null;
         let copyMode = null;
         let dataToCopy = null;
 
-        const icons = ['💼', '🏃', '🏠', '🛒', '🎓', '🏥', '🍕', '🚗', '📅', '🔧', '🧸', '⚽'];
+        // Mise à jour de la liste des icônes (Médecin, Piscine, Famille ajoutés)
+        const icons = ['💼', '🏠', '🚗', '🩺', '🏊', '👨‍👩‍👧‍👦', '⚽', '🏃', '🛒', '🎓', '🍕', '🧸', '🔧'];
         const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22', '#1abc9c', '#34495e'];
 
         const dateInput = document.getElementById('dateInput');
@@ -145,7 +146,7 @@
             if (editingId) tasks[date] = tasks[date].map(t => t.id === editingId ? taskData : t);
             else tasks[date].push(taskData);
             tasks[date].sort((a, b) => a.departure.localeCompare(b.departure));
-            localStorage.setItem('planner_v5_tasks', JSON.stringify(tasks));
+            localStorage.setItem('planner_v6_tasks', JSON.stringify(tasks));
             resetForm(); render();
         }
 
@@ -185,7 +186,7 @@
 
         function deleteTask(date, id) {
             tasks[date] = tasks[date].filter(t => t.id !== id);
-            localStorage.setItem('planner_v5_tasks', JSON.stringify(tasks));
+            localStorage.setItem('planner_v6_tasks', JSON.stringify(tasks));
             render();
         }
 
@@ -196,7 +197,7 @@
                 if (copyMode === 'day') tasks[date] = dataToCopy.map(t => ({...t, id: Math.random()}));
                 else { if (!tasks[date]) tasks[date] = []; tasks[date].push({...dataToCopy, id: Math.random()}); }
                 tasks[date].sort((a, b) => a.departure.localeCompare(b.departure));
-                localStorage.setItem('planner_v5_tasks', JSON.stringify(tasks));
+                localStorage.setItem('planner_v6_tasks', JSON.stringify(tasks));
                 dataToCopy = null; banner.style.display = 'none';
             }
             const container = document.getElementById('taskList');
