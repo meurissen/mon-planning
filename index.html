@@ -4,131 +4,279 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mon Planner Pro</title>
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Planner Pro">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3652/3652191.png">
-    
+
     <style>
-        :root { --primary: #3498db; --bg: #f5f6fa; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 20px; padding-bottom: 100px; }
-        h1 { text-align: center; font-size: 1.5rem; color: #2c3e50; }
+        :root {
+            --primary: #3498db;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --bg: #f5f6fa;
+            --dark: #2c3e50;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: env(safe-area-inset-top) 15px 100px 15px;
+            color: var(--dark);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        h1 { font-size: 22px; text-align: center; margin: 20px 0; font-weight: 800; }
+
+        /* Bannière de copie */
+        #copyBanner {
+            display: none;
+            background: var(--dark);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* Formulaire */
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .label { font-size: 10px; font-weight: 800; color: #bdc3c7; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        .card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.7rem; font-weight: bold; color: #bdc3c7; margin-bottom: 5px; text-transform: uppercase; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ecf0f1; border-radius: 10px; box-sizing: border-box; font-size: 1rem; }
-        
-        .row { display: flex; gap: 10px; }
+        input {
+            width: 100%;
+            border: none;
+            border-bottom: 2px solid #f1f2f6;
+            padding: 10px 0;
+            margin-bottom: 15px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus { border-bottom-color: var(--primary); }
+
+        .row { display: flex; gap: 15px; }
         .row > div { flex: 1; }
-        
-        .btn { background: #2ecc71; color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem; }
-        .btn-edit { background: #f39c12; }
 
-        .task-card { display: flex; align-items: center; background: white; padding: 15px; border-radius: 12px; border-left: 8px solid var(--primary); margin-bottom: 10px; }
-        .task-icon { font-size: 1.5rem; margin-right: 15px; }
-        .task-info { flex: 1; }
-        .task-title { font-weight: bold; margin: 0; }
-        .task-time { font-size: 0.8rem; color: #95a5a6; }
-        .departure { color: #e67e22; font-weight: bold; font-size: 0.9rem; }
-        
-        .delete-btn { color: #e74c3c; border: none; background: none; font-size: 1.2rem; margin-left: 10px; }
+        /* Sélecteur d'icônes */
+        .icon-grid { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; margin-bottom: 15px; }
+        .icon-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 20px;
+            border: 2px solid transparent;
+        }
+        .icon-item.selected { border-color: var(--primary); background: #e1f5fe; }
 
-        input[type="date"] { background: white; cursor: pointer; }
+        .btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
+        }
+
+        /* Liste des tâches */
+        .date-header { font-size: 16px; font-weight: 700; color: #7f8c8d; margin: 25px 0 15px 5px; }
+
+        .task-card {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 12px;
+            border-left: 6px solid var(--primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .task-emoji { font-size: 28px; margin-right: 15px; }
+        .task-content { flex: 1; }
+        .task-title { font-weight: 700; font-size: 16px; margin: 0 0 4px 0; }
+        .task-time { font-size: 13px; color: #95a5a6; }
+        .task-departure { color: #e67e22; font-weight: 700; font-size: 14px; margin-top: 4px; }
+
+        .actions { display: flex; gap: 12px; }
+        .action-btn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 5px; }
+        
+        /* Custom calendar input */
+        input[type="date"] {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+        }
     </style>
 </head>
 <body>
 
     <h1>Mon Planner Pro 🚀</h1>
 
+    <div id="copyBanner">
+        📋 Élément copié ! Choisissez une date.
+        <span onclick="cancelCopy()" style="text-decoration:underline; margin-left:10px; font-size:12px; cursor:pointer;">Annuler</span>
+    </div>
+
     <div class="card">
         <div class="form-group">
-            <label>Date</label>
+            <div class="label">Date de planification</div>
             <input type="date" id="dateInput">
         </div>
+
         <div class="form-group">
-            <label>Activité</label>
-            <input type="text" id="titleInput" placeholder="Ex: Travail, Sport...">
+            <div class="label">Nom de l'activité</div>
+            <input type="text" id="titleInput" placeholder="Bureau, Sport, RDV...">
         </div>
+
         <div class="row">
-            <div class="form-group">
-                <label>Heure Arrivée</label>
+            <div>
+                <div class="label">Sur place à</div>
                 <input type="time" id="arrivalTime" value="09:00">
             </div>
-            <div class="form-group">
-                <label>Trajet (min)</label>
+            <div>
+                <div class="label">Trajet (min)</div>
                 <input type="number" id="durationTime" value="20">
             </div>
         </div>
-        <button class="btn" onclick="saveTask()">PROGRAMMER</button>
+
+        <div class="label">Icône</div>
+        <div class="icon-grid" id="iconGrid"></div>
+
+        <button class="btn" id="mainBtn" onclick="saveTask()">PROGRAMMER</button>
     </div>
 
     <div id="taskList"></div>
 
     <script>
-        let tasks = JSON.parse(localStorage.getItem('planner_tasks')) || {};
+        let tasks = JSON.parse(localStorage.getItem('pro_planner_tasks')) || {};
+        let selectedIcon = '💼';
+        let pendingCopy = null;
+        const icons = ['💼', '🏃', '🏠', '🛒', '🎓', '🏥', '🍕', '🚗', '📅', '🔧'];
+
+        // Initialisation
+        const dateInput = document.getElementById('dateInput');
+        dateInput.value = new Date().toISOString().split('T')[0];
         
-        // Initialiser la date à aujourd'hui
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('dateInput').value = today;
-        document.getElementById('dateInput').addEventListener('change', renderTasks);
+        function setupIcons() {
+            const grid = document.getElementById('iconGrid');
+            icons.forEach(icon => {
+                const div = document.createElement('div');
+                div.className = `icon-item ${icon === selectedIcon ? 'selected' : ''}`;
+                div.innerHTML = icon;
+                div.onclick = () => {
+                    document.querySelectorAll('.icon-item').forEach(el => el.classList.remove('selected'));
+                    div.classList.add('selected');
+                    selectedIcon = icon;
+                };
+                grid.appendChild(div);
+            });
+        }
 
         function calculateDeparture(arrival, duration) {
             const [h, m] = arrival.split(':').map(Number);
-            let totalMinutes = h * 60 + m - parseInt(duration);
-            if (totalMinutes < 0) totalMinutes += 1440;
-            const resH = Math.floor(totalMinutes / 60).toString().padStart(2, '0');
-            const resM = (totalMinutes % 60).toString().padStart(2, '0');
-            return `${resH}:${resM}`;
+            let total = h * 60 + m - parseInt(duration || 0);
+            if (total < 0) total += 1440;
+            return `${Math.floor(total / 60).toString().padStart(2, '0')}:${(total % 60).toString().padStart(2, '0')}`;
         }
 
         function saveTask() {
-            const date = document.getElementById('dateInput').value;
+            const date = dateInput.value;
             const title = document.getElementById('titleInput').value;
             const arrival = document.getElementById('arrivalTime').value;
             const duration = document.getElementById('durationTime').value;
 
-            if (!title) return alert("Nom manquant");
+            if (!title) return alert("Indiquez un nom");
 
             const departure = calculateDeparture(arrival, duration);
-            const newTask = { id: Date.now(), title, arrival, duration, departure };
+            const newTask = { id: Date.now(), title, arrival, duration, departure, icon: selectedIcon };
 
             if (!tasks[date]) tasks[date] = [];
             tasks[date].push(newTask);
             tasks[date].sort((a, b) => a.departure.localeCompare(b.departure));
 
-            localStorage.setItem('planner_tasks', JSON.stringify(tasks));
+            localStorage.setItem('pro_planner_tasks', JSON.stringify(tasks));
             document.getElementById('titleInput').value = '';
-            renderTasks();
+            render();
+        }
+
+        function copyTask(task) {
+            pendingCopy = { ...task };
+            document.getElementById('copyBanner').style.display = 'block';
+        }
+
+        function cancelCopy() {
+            pendingCopy = null;
+            document.getElementById('copyBanner').style.display = 'none';
         }
 
         function deleteTask(date, id) {
             tasks[date] = tasks[date].filter(t => t.id !== id);
-            localStorage.setItem('planner_tasks', JSON.stringify(tasks));
-            renderTasks();
+            localStorage.setItem('pro_planner_tasks', JSON.stringify(tasks));
+            render();
         }
 
-        function renderTasks() {
-            const date = document.getElementById('dateInput').value;
+        function render() {
+            const date = dateInput.value;
+            
+            // Si une copie est en attente et qu'on change de date
+            if (pendingCopy) {
+                const newTask = { ...pendingCopy, id: Date.now() };
+                if (!tasks[date]) tasks[date] = [];
+                tasks[date].push(newTask);
+                tasks[date].sort((a, b) => a.departure.localeCompare(b.departure));
+                localStorage.setItem('pro_planner_tasks', JSON.stringify(tasks));
+                pendingCopy = null;
+                document.getElementById('copyBanner').style.display = 'none';
+            }
+
             const container = document.getElementById('taskList');
-            container.innerHTML = `<h3 style="color:#7f8c8d">Planning du ${date}</h3>`;
+            container.innerHTML = `<div class="date-header">Planning du ${new Date(date).toLocaleDateString('fr-FR', {weekday: 'long', day: 'numeric', month: 'long'})}</div>`;
 
             const dayTasks = tasks[date] || [];
+            if (dayTasks.length === 0) {
+                container.innerHTML += `<p style="text-align:center; color:#bdc3c7; margin-top:20px;">Rien de prévu pour cette journée.</p>`;
+            }
+
             dayTasks.forEach(task => {
                 container.innerHTML += `
                     <div class="task-card">
-                        <div class="task-icon">📅</div>
-                        <div class="task-info">
+                        <div class="task-emoji">${task.icon}</div>
+                        <div class="task-content">
                             <p class="task-title">${task.title}</p>
-                            <span class="task-time">Arrivée: ${task.arrival}</span><br>
-                            <span class="departure">🚗 Départ : ${task.departure}</span>
+                            <div class="task-time">📍 Arrivée : ${task.arrival}</div>
+                            <div class="task-departure">🚗 Départ : ${task.departure}</div>
                         </div>
-                        <button class="delete-btn" onclick="deleteTask('${date}', ${task.id})">🗑️</button>
+                        <div class="actions">
+                            <button class="action-btn" onclick='copyTask(${JSON.stringify(task)})'>📋</button>
+                            <button class="action-btn" onclick="deleteTask('${date}', ${task.id})">🗑️</button>
+                        </div>
                     </div>
                 `;
             });
         }
 
-        renderTasks();
+        dateInput.onchange = render;
+        setupIcons();
+        render();
     </script>
 </body>
 </html>
