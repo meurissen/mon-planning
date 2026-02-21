@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mon Planner Pro</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3652/3652191.png">
+    
+    <style>
+        :root { --primary: #3498db; --bg: #f5f6fa; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 20px; padding-bottom: 100px; }
+        h1 { text-align: center; font-size: 1.5rem; color: #2c3e50; }
+        
+        .card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.7rem; font-weight: bold; color: #bdc3c7; margin-bottom: 5px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ecf0f1; border-radius: 10px; box-sizing: border-box; font-size: 1rem; }
+        
+        .row { display: flex; gap: 10px; }
+        .row > div { flex: 1; }
+        
+        .btn { background: #2ecc71; color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        .btn-edit { background: #f39c12; }
+
+        .task-card { display: flex; align-items: center; background: white; padding: 15px; border-radius: 12px; border-left: 8px solid var(--primary); margin-bottom: 10px; }
+        .task-icon { font-size: 1.5rem; margin-right: 15px; }
+        .task-info { flex: 1; }
+        .task-title { font-weight: bold; margin: 0; }
+        .task-time { font-size: 0.8rem; color: #95a5a6; }
+        .departure { color: #e67e22; font-weight: bold; font-size: 0.9rem; }
+        
+        .delete-btn { color: #e74c3c; border: none; background: none; font-size: 1.2rem; margin-left: 10px; }
+
+        input[type="date"] { background: white; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h1>Mon Planner Pro 🚀</h1>
+
+    <div class="card">
+        <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="dateInput">
+        </div>
+        <div class="form-group">
+            <label>Activité</label>
+            <input type="text" id="titleInput" placeholder="Ex: Travail, Sport...">
+        </div>
+        <div class="row">
+            <div class="form-group">
+                <label>Heure Arrivée</label>
+                <input type="time" id="arrivalTime" value="09:00">
+            </div>
+            <div class="form-group">
+                <label>Trajet (min)</label>
+                <input type="number" id="durationTime" value="20">
+            </div>
+        </div>
+        <button class="btn" onclick="saveTask()">PROGRAMMER</button>
+    </div>
+
+    <div id="taskList"></div>
+
+    <script>
+        let tasks = JSON.parse(localStorage.getItem('planner_tasks')) || {};
+        
+        // Initialiser la date à aujourd'hui
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('dateInput').value = today;
+        document.getElementById('dateInput').addEventListener('change', renderTasks);
+
+        function calculateDeparture(arrival, duration) {
+            const [h, m] = arrival.split(':').map(Number);
+            let totalMinutes = h * 60 + m - parseInt(duration);
+            if (totalMinutes < 0) totalMinutes += 1440;
+            const resH = Math.floor(totalMinutes / 60).toString().padStart(2, '0');
+            const resM = (totalMinutes % 60).toString().padStart(2, '0');
+            return `${resH}:${resM}`;
+        }
+
+        function saveTask() {
+            const date = document.getElementById('dateInput').value;
+            const title = document.getElementById('titleInput').value;
+            const arrival = document.getElementById('arrivalTime').value;
+            const duration = document.getElementById('durationTime').value;
+
+            if (!title) return alert("Nom manquant");
+
+            const departure = calculateDeparture(arrival, duration);
+            const newTask = { id: Date.now(), title, arrival, duration, departure };
+
+            if (!tasks[date]) tasks[date] = [];
+            tasks[date].push(newTask);
+            tasks[date].sort((a, b) => a.departure.localeCompare(b.departure));
+
+            localStorage.setItem('planner_tasks', JSON.stringify(tasks));
+            document.getElementById('titleInput').value = '';
+            renderTasks();
+        }
+
+        function deleteTask(date, id) {
+            tasks[date] = tasks[date].filter(t => t.id !== id);
+            localStorage.setItem('planner_tasks', JSON.stringify(tasks));
+            renderTasks();
+        }
+
+        function renderTasks() {
+            const date = document.getElementById('dateInput').value;
+            const container = document.getElementById('taskList');
+            container.innerHTML = `<h3 style="color:#7f8c8d">Planning du ${date}</h3>`;
+
+            const dayTasks = tasks[date] || [];
+            dayTasks.forEach(task => {
+                container.innerHTML += `
+                    <div class="task-card">
+                        <div class="task-icon">📅</div>
+                        <div class="task-info">
+                            <p class="task-title">${task.title}</p>
+                            <span class="task-time">Arrivée: ${task.arrival}</span><br>
+                            <span class="departure">🚗 Départ : ${task.departure}</span>
+                        </div>
+                        <button class="delete-btn" onclick="deleteTask('${date}', ${task.id})">🗑️</button>
+                    </div>
+                `;
+            });
+        }
+
+        renderTasks();
+    </script>
+</body>
+</html>
