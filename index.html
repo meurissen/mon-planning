@@ -3,115 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Planner v6 - Expert</title>
+    <title>Mon Planner v6</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --p-color: #007bff; --bg: #f1f3f5; --accent: #ff9f43; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); padding: 15px; margin: 0; color: #333; }
-        .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        label { font-size: 12px; color: #666; font-weight: bold; text-transform: uppercase; }
-        input, button { width: 100%; padding: 12px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { background: var(--p-color); color: white; border: none; font-weight: bold; margin-top: 10px; }
-        .secondary { background: #6c757d; }
+        :root { --p-color: #007bff; --bg: #f4f7f9; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
         
-        .item { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 6px solid var(--accent); position: relative; }
-        .item-title { font-weight: 800; font-size: 1.1em; display: block; margin-bottom: 5px; color: #222; }
-        .time-row { display: flex; gap: 10px; font-size: 0.9em; color: #555; }
-        .time-tag { background: #eee; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
-        .depart { color: #d63031; border: 1px solid #fab1a0; }
+        /* Ton interface habituelle */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .calendar-icon { font-size: 24px; color: var(--p-color); }
         
-        .delete-btn { position: absolute; top: 10px; right: 10px; background: #ff4757; width: 30px; height: 30px; padding: 0; line-height: 30px; border-radius: 50%; }
-        .export-section { margin-top: 40px; text-align: center; }
+        .card { background: white; border-radius: 15px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        /* Formulaire */
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+        .row { display: flex; gap: 10px; }
+        button { width: 100%; padding: 12px; background: var(--p-color); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        
+        /* Liste des éléments */
+        .item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 12px; border-left: 6px solid var(--p-color); 
+                display: flex; flex-direction: column; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .item-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 1.1em; }
+        
+        /* Nouvelle zone horaires */
+        .time-box { display: flex; gap: 8px; flex-wrap: wrap; }
+        .tag { font-size: 0.8em; padding: 4px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px; }
+        .tag-depart { background: #fff5f5; color: #e03131; border: 1px solid #ffc9c9; }
+        .tag-rdv { background: #e7f5ff; color: #1971c2; border: 1px solid #a5d8ff; }
+        .tag-fin { background: #f4fce3; color: #5c940d; border: 1px solid #d8f5a2; }
+
+        .delete-btn { color: #ff6b6b; cursor: pointer; padding: 5px; }
+        .export-btn { background: #6c757d; margin-top: 20px; font-size: 0.9em; }
     </style>
 </head>
 <body>
 
+<div class="header">
+    <h2><i class="fa-solid fa-calendar-day calendar-icon"></i> Mon Planning</h2>
+    <div id="currentDate" style="font-weight: bold; color: #666;"></div>
+</div>
+
 <div class="card">
-    <h3>Nouveau RDV</h3>
-    <label>Nom de l'élément</label>
-    <input type="text" id="title" placeholder="ex: Client Dupont">
-    
-    <label>Heure du RDV (sur place)</label>
-    <input type="time" id="startTime">
-    
-    <label>Trajet vers le RDV (minutes)</label>
-    <input type="number" id="travelTime" placeholder="30">
-    
-    <label>Durée du RDV (minutes)</label>
-    <input type="number" id="eventDuration" placeholder="60">
-    
-    <button onclick="addItem()">Ajouter au planning</button>
+    <input type="text" id="title" placeholder="Nom de l'élément (ex: Client...)">
+    <div class="row">
+        <div style="flex:1"><small>Heure RDV</small><input type="time" id="rdvTime"></div>
+        <div style="flex:1"><small>Trajet (min)</small><input type="number" id="travel" placeholder="Ex: 20"></div>
+        <div style="flex:1"><small>Durée (min)</small><input type="number" id="duration" placeholder="Ex: 60"></div>
+    </div>
+    <button onclick="addItem()"><i class="fa-solid fa-plus"></i> Ajouter</button>
 </div>
 
-<div id="plannerList"></div>
+<div id="list"></div>
 
-<div class="export-section">
-    <button class="secondary" onclick="exportData()">💾 Exporter pour le NAS (JSON)</button>
-</div>
+<button class="export-btn" onclick="exportJSON()"><i class="fa-solid fa-download"></i> Exporter pour le NAS</button>
 
 <script>
-    let items = JSON.parse(localStorage.getItem('plannerData')) || [];
+    let plannerItems = JSON.parse(localStorage.getItem('planner_v6')) || [];
+    document.getElementById('currentDate').innerText = new Date().toLocaleDateString('fr-FR', {weekday: 'long', day: 'numeric', month: 'long'});
 
     function render() {
-        items.sort((a, b) => a.departsAt.localeCompare(b.departsAt));
-        const list = document.getElementById('plannerList');
-        list.innerHTML = items.map((item, index) => `
-            <div class="item">
-                <span class="item-title">${item.title}</span>
-                <div class="time-row">
-                    <span class="time-tag depart">Départ: ${item.departsAt}</span>
-                    <span class="time-tag">RDV: ${item.rdvAt}</span>
-                    <span class="time-tag">Fin: ${item.endsAt}</span>
+        plannerItems.sort((a, b) => a.timeDepart.localeCompare(b.timeDepart));
+        const listDiv = document.getElementById('list');
+        listDiv.innerHTML = '';
+
+        plannerItems.forEach((item, index) => {
+            listDiv.innerHTML += `
+                <div class="item">
+                    <div class="item-header">
+                        <span><i class="fa-solid fa-circle-dot" style="color:var(--p-color); font-size:10px;"></i> ${item.title}</span>
+                        <i class="fa-solid fa-trash-can delete-btn" onclick="deleteItem(${index})"></i>
+                    </div>
+                    <div class="time-box">
+                        <span class="tag tag-depart"><i class="fa-solid fa-car"></i> Départ: ${item.timeDepart}</span>
+                        <span class="tag tag-rdv"><i class="fa-solid fa-clock"></i> RDV: ${item.timeRDV}</span>
+                        <span class="tag tag-fin"><i class="fa-solid fa-house-flag"></i> Fin: ${item.timeEnd}</span>
+                    </div>
                 </div>
-                <button class="delete-btn" onclick="deleteItem(${index})">✕</button>
-            </div>
-        `).join('');
-        localStorage.setItem('plannerData', JSON.stringify(items));
+            `;
+        });
+        localStorage.setItem('planner_v6', JSON.stringify(plannerItems));
     }
 
     function addItem() {
         const title = document.getElementById('title').value;
-        const rdvTime = document.getElementById('startTime').value;
-        const travel = parseInt(document.getElementById('travelTime').value) || 0;
-        const duration = parseInt(document.getElementById('eventDuration').value) || 0;
+        const timeRDV = document.getElementById('rdvTime').value;
+        const travel = parseInt(document.getElementById('travel').value) || 0;
+        const duration = parseInt(document.getElementById('duration').value) || 0;
 
-        if(!title || !rdvTime) return alert("Nom et Heure RDV requis !");
+        if (!title || !timeRDV) return;
 
-        // Calculs
-        let dateRDV = new Date(`2026-01-01T${rdvTime}:00`);
-        let dateDepart = new Date(dateRDV.getTime() - travel * 60000);
-        let dateFin = new Date(dateRDV.getTime() + duration * 60000);
+        // Calculs magiques
+        let dateObj = new Date(`2026-01-01T${timeRDV}:00`);
+        let dateDepart = new Date(dateObj.getTime() - travel * 60000);
+        let dateEnd = new Date(dateObj.getTime() + duration * 60000);
 
-        const format = (d) => d.toTimeString().slice(0, 5);
+        const fmt = (d) => d.toTimeString().slice(0, 5);
 
-        items.push({
-            title: title,
-            departsAt: format(dateDepart),
-            rdvAt: rdvTime,
-            endsAt: format(dateFin)
+        plannerItems.push({
+            title,
+            timeRDV,
+            timeDepart: fmt(dateDepart),
+            timeEnd: fmt(dateEnd)
         });
 
         render();
-        // Reset
+        // Clear
         document.getElementById('title').value = '';
-        document.getElementById('travelTime').value = '';
-        document.getElementById('eventDuration').value = '';
+        document.getElementById('travel').value = '';
+        document.getElementById('duration').value = '';
     }
 
     function deleteItem(index) {
-        if(confirm("Supprimer cet élément ?")) {
-            items.splice(index, 1);
-            render();
-        }
+        plannerItems.splice(index, 1);
+        render();
     }
 
-    function exportData() {
-        const dataStr = JSON.stringify(items, null, 2);
-        const blob = new Blob([dataStr], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `planner_export_${new Date().toLocaleDateString()}.json`;
-        a.click();
+    function exportJSON() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(plannerItems));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "planner_data.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
     }
 
     render();
