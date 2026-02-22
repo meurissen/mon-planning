@@ -3,85 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Planner v6</title>
+    <title>Planner v6</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --p-color: #007bff; --bg: #f4f7f9; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
         
-        /* Ton interface habituelle */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .calendar-icon { font-size: 24px; color: var(--p-color); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .calendar-icon { font-size: 22px; color: var(--p-color); }
         
-        .card { background: white; border-radius: 15px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
         /* Formulaire */
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
-        .row { display: flex; gap: 10px; }
-        button { width: 100%; padding: 12px; background: var(--p-color); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        small { color: #666; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        input { width: 100%; padding: 10px; margin: 5px 0 12px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .row { display: flex; gap: 8px; }
+        button { width: 100%; padding: 12px; background: var(--p-color); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
         
         /* Liste des éléments */
-        .item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 12px; border-left: 6px solid var(--p-color); 
-                display: flex; flex-direction: column; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-        .item-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 1.1em; }
+        .item { background: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid var(--p-color); position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
+        .item-title { font-weight: bold; font-size: 1.1em; color: #222; margin-bottom: 6px; display: block; }
         
-        /* Nouvelle zone horaires */
-        .time-box { display: flex; gap: 8px; flex-wrap: wrap; }
-        .tag { font-size: 0.8em; padding: 4px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px; }
-        .tag-depart { background: #fff5f5; color: #e03131; border: 1px solid #ffc9c9; }
-        .tag-rdv { background: #e7f5ff; color: #1971c2; border: 1px solid #a5d8ff; }
-        .tag-fin { background: #f4fce3; color: #5c940d; border: 1px solid #d8f5a2; }
+        /* Affichage des 3 Heures */
+        .time-row { display: flex; justify-content: space-between; background: #f8f9fa; padding: 8px; border-radius: 6px; }
+        .time-unit { display: flex; flex-direction: column; align-items: center; flex: 1; }
+        .time-label { font-size: 10px; color: #888; text-transform: uppercase; }
+        .time-value { font-size: 13px; font-weight: bold; color: #333; }
+        .val-depart { color: #d63031; } /* Rouge pour le départ */
 
-        .delete-btn { color: #ff6b6b; cursor: pointer; padding: 5px; }
-        .export-btn { background: #6c757d; margin-top: 20px; font-size: 0.9em; }
+        .delete-btn { position: absolute; top: 10px; right: 10px; color: #ccc; font-size: 18px; cursor: pointer; }
+        .export-btn { background: #6c757d; margin-top: 20px; font-size: 14px; opacity: 0.8; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h2><i class="fa-solid fa-calendar-day calendar-icon"></i> Mon Planning</h2>
-    <div id="currentDate" style="font-weight: bold; color: #666;"></div>
+    <h3><i class="fa-solid fa-calendar-alt calendar-icon"></i> Mon Planning</h3>
+    <div id="currentDate" style="font-size: 14px; color: #666;"></div>
 </div>
 
 <div class="card">
-    <input type="text" id="title" placeholder="Nom de l'élément (ex: Client...)">
+    <small>Nom de l'élément</small>
+    <input type="text" id="title" placeholder="Client, RDV, etc.">
+    
     <div class="row">
-        <div style="flex:1"><small>Heure RDV</small><input type="time" id="rdvTime"></div>
-        <div style="flex:1"><small>Trajet (min)</small><input type="number" id="travel" placeholder="Ex: 20"></div>
-        <div style="flex:1"><small>Durée (min)</small><input type="number" id="duration" placeholder="Ex: 60"></div>
+        <div style="flex:1.5"><small>Heure RDV</small><input type="time" id="rdvTime"></div>
+        <div style="flex:1"><small>Trajet (min)</small><input type="number" id="travel" placeholder="0"></div>
+        <div style="flex:1"><small>Durée (min)</small><input type="number" id="duration" placeholder="0"></div>
     </div>
-    <button onclick="addItem()"><i class="fa-solid fa-plus"></i> Ajouter</button>
+    
+    <button onclick="addItem()"><i class="fa-solid fa-plus-circle"></i> Ajouter</button>
 </div>
 
 <div id="list"></div>
 
-<button class="export-btn" onclick="exportJSON()"><i class="fa-solid fa-download"></i> Exporter pour le NAS</button>
+<button class="export-btn" onclick="exportJSON()"><i class="fa-solid fa-file-export"></i> Exporter pour le NAS</button>
 
 <script>
-    let plannerItems = JSON.parse(localStorage.getItem('planner_v6')) || [];
-    document.getElementById('currentDate').innerText = new Date().toLocaleDateString('fr-FR', {weekday: 'long', day: 'numeric', month: 'long'});
+    let plannerItems = JSON.parse(localStorage.getItem('planner_v6_data')) || [];
+    document.getElementById('currentDate').innerText = new Date().toLocaleDateString('fr-FR', {weekday: 'short', day: 'numeric', month: 'short'});
 
     function render() {
+        // Tri par heure de départ
         plannerItems.sort((a, b) => a.timeDepart.localeCompare(b.timeDepart));
+        
         const listDiv = document.getElementById('list');
         listDiv.innerHTML = '';
 
         plannerItems.forEach((item, index) => {
             listDiv.innerHTML += `
                 <div class="item">
-                    <div class="item-header">
-                        <span><i class="fa-solid fa-circle-dot" style="color:var(--p-color); font-size:10px;"></i> ${item.title}</span>
-                        <i class="fa-solid fa-trash-can delete-btn" onclick="deleteItem(${index})"></i>
-                    </div>
-                    <div class="time-box">
-                        <span class="tag tag-depart"><i class="fa-solid fa-car"></i> Départ: ${item.timeDepart}</span>
-                        <span class="tag tag-rdv"><i class="fa-solid fa-clock"></i> RDV: ${item.timeRDV}</span>
-                        <span class="tag tag-fin"><i class="fa-solid fa-house-flag"></i> Fin: ${item.timeEnd}</span>
+                    <span class="item-title">${item.title}</span>
+                    <i class="fa-solid fa-times-circle delete-btn" onclick="deleteItem(${index})"></i>
+                    
+                    <div class="time-row">
+                        <div class="time-unit">
+                            <span class="time-label">Départ</span>
+                            <span class="time-value val-depart">${item.timeDepart}</span>
+                        </div>
+                        <div class="time-unit" style="border-left: 1px solid #eee; border-right: 1px solid #eee;">
+                            <span class="time-label">RDV</span>
+                            <span class="time-value">${item.timeRDV}</span>
+                        </div>
+                        <div class="time-unit">
+                            <span class="time-label">Fin</span>
+                            <span class="time-value">${item.timeEnd}</span>
+                        </div>
                     </div>
                 </div>
             `;
         });
-        localStorage.setItem('planner_v6', JSON.stringify(plannerItems));
+        localStorage.setItem('planner_v6_data', JSON.stringify(plannerItems));
     }
 
     function addItem() {
@@ -92,7 +104,7 @@
 
         if (!title || !timeRDV) return;
 
-        // Calculs magiques
+        // Calculs
         let dateObj = new Date(`2026-01-01T${timeRDV}:00`);
         let dateDepart = new Date(dateObj.getTime() - travel * 60000);
         let dateEnd = new Date(dateObj.getTime() + duration * 60000);
@@ -107,22 +119,25 @@
         });
 
         render();
-        // Clear
+        // Reset
         document.getElementById('title').value = '';
+        document.getElementById('rdvTime').value = '';
         document.getElementById('travel').value = '';
         document.getElementById('duration').value = '';
     }
 
     function deleteItem(index) {
-        plannerItems.splice(index, 1);
-        render();
+        if(confirm("Supprimer ?")) {
+            plannerItems.splice(index, 1);
+            render();
+        }
     }
 
     function exportJSON() {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(plannerItems));
         const downloadAnchorNode = document.createElement('a');
         downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "planner_data.json");
+        downloadAnchorNode.setAttribute("download", "export_planner.json");
         document.body.appendChild(downloadAnchorNode);
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
