@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Planner Pro v6 - NAS Edition</title>
+    <title>Planner Pro Famille v6</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3652/3652191.png">
@@ -32,17 +32,17 @@
         .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; color: white; font-weight: bold; font-size: 15px; margin-top: 15px; cursor: pointer; }
         .btn-add { background: var(--success); }
         .btn-edit { background: var(--warning); }
-        .btn-export { background: #7f8c8d; margin-top: 20px; font-size: 12px; }
+        .btn-copy-day { background: var(--dark); margin-top: 5px; font-size: 12px; padding: 8px; }
+        .btn-export { background: #7f8c8d; font-size: 11px; margin-top: 10px; }
 
         #banner { display: none; background: #2c3e50; color: white; padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 10px; font-size: 13px; position: sticky; top: 10px; z-index: 100; }
 
-        /* Styles de la carte de tâche avec les 3 temps */
         .task-card { display: flex; align-items: center; background: white; padding: 12px; border-radius: 15px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border-left: 8px solid var(--primary); }
         .task-emoji { font-size: 24px; margin-right: 12px; }
         .task-info { flex: 1; }
-        .task-title { font-weight: bold; margin: 0 0 5px 0; font-size: 15px; }
+        .task-title { font-weight: bold; margin: 0 0 4px 0; font-size: 15px; }
         
-        .time-labels { display: flex; gap: 8px; font-size: 11px; font-weight: bold; }
+        .time-box { display: flex; gap: 8px; font-size: 11px; font-weight: bold; flex-wrap: wrap; }
         .t-dep { color: #e67e22; }
         .t-arr { color: var(--primary); }
         .t-end { color: var(--success); }
@@ -68,7 +68,7 @@
         <input type="text" id="titleInput" placeholder="Nom...">
         
         <div class="row">
-            <div><div class="label">Heure RDV</div><input type="time" id="arrivalTime" value="09:00"></div>
+            <div><div class="label">Arrivée</div><input type="time" id="arrivalTime" value="09:00"></div>
             <div><div class="label">Trajet (min)</div><input type="number" id="travelInput" value="20"></div>
             <div><div class="label">Durée (min)</div><input type="number" id="durationInput" value="60"></div>
         </div>
@@ -80,16 +80,19 @@
         <div class="selection-grid" id="colorGrid"></div>
 
         <button class="btn btn-add" id="mainBtn" onclick="saveTask()">PROGRAMMER</button>
-        <button class="btn btn-export" onclick="exportData()">💾 EXPORTER JSON (POUR NAS)</button>
+        <button class="btn btn-copy-day" id="copyDayBtn" onclick="prepareCopy('day')">DUPLIQUER LA JOURNÉE</button>
+        <button class="btn btn-export" onclick="exportData()">💾 EXPORT JSON POUR NAS</button>
     </div>
 
     <div id="taskList"></div>
 
     <script>
+        // On garde scrupuleusement le nom v6_tasks
         let tasks = JSON.parse(localStorage.getItem('planner_v6_tasks')) || {};
         let selectedIcon = '💼';
         let selectedColor = '#3498db';
         let editingId = null;
+        let copyMode = null;
         let dataToCopy = null;
 
         const icons = ['💼', '🏠', '🚗', '🩺', '🏊', '👨‍👩‍👧‍👦', '⚽', '🏃', '🛒', '🎓', '🍕', '🧸', '🔧'];
@@ -127,7 +130,6 @@
             render();
         }
 
-        // Calcule une heure +/- minutes
         function adjustTime(timeStr, minutes) {
             let [h, m] = timeStr.split(':').map(Number);
             let total = h * 60 + m + parseInt(minutes);
@@ -139,12 +141,12 @@
         function saveTask() {
             const date = dateInput.value;
             const title = document.getElementById('titleInput').value;
+            if (!title) return;
+
             const arrival = document.getElementById('arrivalTime').value;
             const travel = document.getElementById('travelInput').value;
             const duration = document.getElementById('durationInput').value;
-
-            if (!title) return;
-
+            
             const departure = adjustTime(arrival, -travel);
             const end = adjustTime(arrival, duration);
 
@@ -152,11 +154,11 @@
                 id: editingId || Date.now(), 
                 title, 
                 arrival, 
-                travel, 
-                duration, 
+                travel,
+                duration,
                 departure, 
                 end,
-                icon: selectedIcon,
+                icon: selectedIcon, 
                 color: selectedColor 
             };
 
@@ -182,13 +184,28 @@
             editingId = id;
             document.getElementById('titleInput').value = task.title;
             document.getElementById('arrivalTime').value = task.arrival;
-            document.getElementById('travelInput').value = task.travel;
-            document.getElementById('durationInput').value = task.duration;
+            document.getElementById('travelInput').value = task.travel || 0;
+            document.getElementById('durationInput').value = task.duration || 0;
             selectedIcon = task.icon; selectedColor = task.color;
             setupSelection();
             document.getElementById('mainBtn').innerText = "MODIFIER";
             document.getElementById('mainBtn').className = "btn btn-edit";
             window.scrollTo(0,0);
+        }
+
+        function prepareCopy(mode, taskData = null) {
+            copyMode = mode;
+            const banner = document.getElementById('banner');
+            if (mode === 'day') {
+                const date = dateInput.value;
+                if (!tasks[date] || tasks[date].length === 0) return;
+                dataToCopy = [...tasks[date]];
+                banner.innerHTML = "📋 Journée copiée ! Changez de date pour coller.";
+            } else {
+                dataToCopy = {...taskData};
+                banner.innerHTML = `📋 "${taskData.title}" copié !`;
+            }
+            banner.style.display = 'block';
         }
 
         function deleteTask(date, id) {
@@ -201,31 +218,48 @@
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tasks));
             const dlAnchor = document.createElement('a');
             dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", "planner_v6_backup.json");
+            dlAnchor.setAttribute("download", "planner_v6_export.json");
             dlAnchor.click();
         }
 
         function render() {
             const date = dateInput.value;
+            const banner = document.getElementById('banner');
+
+            // Logique de collage
+            if (dataToCopy) {
+                if (copyMode === 'day') {
+                    tasks[date] = dataToCopy.map(t => ({...t, id: Math.random()}));
+                } else {
+                    if (!tasks[date]) tasks[date] = [];
+                    tasks[date].push({...dataToCopy, id: Math.random()});
+                }
+                tasks[date].sort((a, b) => a.departure.localeCompare(b.departure));
+                localStorage.setItem('planner_v6_tasks', JSON.stringify(tasks));
+                dataToCopy = null; banner.style.display = 'none';
+            }
+
             const container = document.getElementById('taskList');
             const dayLabel = new Date(date).toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
-            
             container.innerHTML = `<div style="font-weight:bold; color:#7f8c8d; margin-bottom:10px; text-transform:capitalize;">${dayLabel}</div>`;
             
             const dayTasks = tasks[date] || [];
+            document.getElementById('copyDayBtn').style.display = dayTasks.length > 0 ? 'block' : 'none';
+
             dayTasks.forEach(task => {
                 container.innerHTML += `
                     <div class="task-card" style="border-left-color: ${task.color}">
                         <div class="task-emoji">${task.icon}</div>
                         <div class="task-info">
                             <p class="task-title">${task.title}</p>
-                            <div class="time-labels">
+                            <div class="time-box">
                                 <span class="t-dep">🚗 ${task.departure}</span>
                                 <span class="t-arr">📍 ${task.arrival}</span>
-                                <span class="t-end">🏁 ${task.end}</span>
+                                <span class="t-end">🏁 ${task.end || '--:--'}</span>
                             </div>
                         </div>
                         <div class="actions">
+                            <button onclick='prepareCopy("task", ${JSON.stringify(task)})'>📋</button>
                             <button onclick="editTask(${task.id})">✏️</button>
                             <button onclick="deleteTask('${date}', ${task.id})">🗑️</button>
                         </div>
