@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Planner v6</title>
+    <title>Planner NAS v6</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --p-color: #007bff; --bg: #f4f7f9; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
         
+        /* Interface habituelle */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .calendar-icon { font-size: 22px; color: var(--p-color); }
         
@@ -20,31 +21,33 @@
         .row { display: flex; gap: 8px; }
         button { width: 100%; padding: 12px; background: var(--p-color); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
         
-        /* Liste des éléments */
+        /* Liste des éléments (Cartes) */
         .item { background: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid var(--p-color); position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
-        .item-title { font-weight: bold; font-size: 1.1em; color: #222; margin-bottom: 6px; display: block; }
+        .item-title { font-weight: bold; font-size: 1.1em; color: #222; margin-bottom: 8px; display: block; }
         
-        /* Affichage des 3 Heures */
-        .time-row { display: flex; justify-content: space-between; background: #f8f9fa; padding: 8px; border-radius: 6px; }
-        .time-unit { display: flex; flex-direction: column; align-items: center; flex: 1; }
-        .time-label { font-size: 10px; color: #888; text-transform: uppercase; }
-        .time-value { font-size: 13px; font-weight: bold; color: #333; }
+        /* Zone des 3 horaires */
+        .time-display { display: flex; justify-content: space-between; background: #f8f9fa; padding: 10px; border-radius: 8px; }
+        .time-col { text-align: center; flex: 1; }
+        .time-label { font-size: 10px; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px; }
+        .time-val { font-size: 14px; font-weight: bold; color: #333; }
         .val-depart { color: #d63031; } /* Rouge pour le départ */
+        .val-fin { color: #2f9e44; }    /* Vert pour la fin */
 
-        .delete-btn { position: absolute; top: 10px; right: 10px; color: #ccc; font-size: 18px; cursor: pointer; }
-        .export-btn { background: #6c757d; margin-top: 20px; font-size: 14px; opacity: 0.8; }
+        .delete-btn { position: absolute; top: 12px; right: 12px; color: #ccc; cursor: pointer; }
+        .footer-btns { margin-top: 25px; display: flex; flex-direction: column; gap: 10px; }
+        .export-btn { background: #6c757d; font-size: 14px; opacity: 0.9; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h3><i class="fa-solid fa-calendar-alt calendar-icon"></i> Mon Planning</h3>
-    <div id="currentDate" style="font-size: 14px; color: #666;"></div>
+    <h3><i class="fa-solid fa-calendar-check calendar-icon"></i> Mon Planner NAS</h3>
+    <div id="currentDate" style="font-size: 14px; color: #666; font-weight: bold;"></div>
 </div>
 
 <div class="card">
-    <small>Nom de l'élément</small>
-    <input type="text" id="title" placeholder="Client, RDV, etc.">
+    <small>Description</small>
+    <input type="text" id="title" placeholder="Ex: Client Dupont">
     
     <div class="row">
         <div style="flex:1.5"><small>Heure RDV</small><input type="time" id="rdvTime"></div>
@@ -52,19 +55,25 @@
         <div style="flex:1"><small>Durée (min)</small><input type="number" id="duration" placeholder="0"></div>
     </div>
     
-    <button onclick="addItem()"><i class="fa-solid fa-plus-circle"></i> Ajouter</button>
+    <button onclick="addItem()"><i class="fa-solid fa-plus-circle"></i> Ajouter au planning</button>
 </div>
 
 <div id="list"></div>
 
-<button class="export-btn" onclick="exportJSON()"><i class="fa-solid fa-file-export"></i> Exporter pour le NAS</button>
+<div class="footer-btns">
+    <button class="export-btn" onclick="exportJSON()"><i class="fa-solid fa-file-export"></i> Exporter pour sauvegarde</button>
+</div>
 
 <script>
-    let plannerItems = JSON.parse(localStorage.getItem('planner_v6_data')) || [];
-    document.getElementById('currentDate').innerText = new Date().toLocaleDateString('fr-FR', {weekday: 'short', day: 'numeric', month: 'short'});
+    // Chargement des données (LocalStorage pour Vercel ou futur JSON NAS)
+    let plannerItems = JSON.parse(localStorage.getItem('planner_v6_nas')) || [];
+    
+    // Affichage de la date
+    const options = { weekday: 'long', day: 'numeric', month: 'long' };
+    document.getElementById('currentDate').innerText = new Date().toLocaleDateString('fr-FR', options);
 
     function render() {
-        // Tri par heure de départ
+        // Tri automatique par heure de départ
         plannerItems.sort((a, b) => a.timeDepart.localeCompare(b.timeDepart));
         
         const listDiv = document.getElementById('list');
@@ -74,26 +83,26 @@
             listDiv.innerHTML += `
                 <div class="item">
                     <span class="item-title">${item.title}</span>
-                    <i class="fa-solid fa-times-circle delete-btn" onclick="deleteItem(${index})"></i>
+                    <i class="fa-solid fa-trash-can delete-btn" onclick="deleteItem(${index})"></i>
                     
-                    <div class="time-row">
-                        <div class="time-unit">
+                    <div class="time-display">
+                        <div class="time-col">
                             <span class="time-label">Départ</span>
-                            <span class="time-value val-depart">${item.timeDepart}</span>
+                            <span class="time-val val-depart">${item.timeDepart}</span>
                         </div>
-                        <div class="time-unit" style="border-left: 1px solid #eee; border-right: 1px solid #eee;">
+                        <div class="time-col" style="border-left: 1px solid #eee; border-right: 1px solid #eee;">
                             <span class="time-label">RDV</span>
-                            <span class="time-value">${item.timeRDV}</span>
+                            <span class="time-val">${item.timeRDV}</span>
                         </div>
-                        <div class="time-unit">
+                        <div class="time-col">
                             <span class="time-label">Fin</span>
-                            <span class="time-value">${item.timeEnd}</span>
+                            <span class="time-val val-fin">${item.timeEnd}</span>
                         </div>
                     </div>
                 </div>
             `;
         });
-        localStorage.setItem('planner_v6_data', JSON.stringify(plannerItems));
+        localStorage.setItem('planner_v6_nas', JSON.stringify(plannerItems));
     }
 
     function addItem() {
@@ -102,24 +111,25 @@
         const travel = parseInt(document.getElementById('travel').value) || 0;
         const duration = parseInt(document.getElementById('duration').value) || 0;
 
-        if (!title || !timeRDV) return;
+        if (!title || !timeRDV) return alert("Précise au moins le nom et l'heure !");
 
-        // Calculs
+        // Calcul des horaires
         let dateObj = new Date(`2026-01-01T${timeRDV}:00`);
         let dateDepart = new Date(dateObj.getTime() - travel * 60000);
         let dateEnd = new Date(dateObj.getTime() + duration * 60000);
 
-        const fmt = (d) => d.toTimeString().slice(0, 5);
+        const format = (d) => d.toTimeString().slice(0, 5);
 
         plannerItems.push({
-            title,
-            timeRDV,
-            timeDepart: fmt(dateDepart),
-            timeEnd: fmt(dateEnd)
+            title: title,
+            timeRDV: timeRDV,
+            timeDepart: format(dateDepart),
+            timeEnd: format(dateEnd)
         });
 
         render();
-        // Reset
+        
+        // Reset des champs
         document.getElementById('title').value = '';
         document.getElementById('rdvTime').value = '';
         document.getElementById('travel').value = '';
@@ -127,7 +137,7 @@
     }
 
     function deleteItem(index) {
-        if(confirm("Supprimer ?")) {
+        if(confirm("Supprimer cet élément ?")) {
             plannerItems.splice(index, 1);
             render();
         }
@@ -137,7 +147,7 @@
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(plannerItems));
         const downloadAnchorNode = document.createElement('a');
         downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "export_planner.json");
+        downloadAnchorNode.setAttribute("download", "planner_data.json");
         document.body.appendChild(downloadAnchorNode);
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
